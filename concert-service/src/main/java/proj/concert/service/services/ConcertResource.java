@@ -1,24 +1,32 @@
 package proj.concert.service.services;
 
-import java.net.URI;
-
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.Performer;
+import proj.concert.service.domain.User;
+
 
 @Path("/concert-service")
 public class ConcertResource {
+
+    // private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
+
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
     @GET
     @Path("/concerts/{id}")
@@ -112,6 +120,36 @@ public class ConcertResource {
 
         return performers != null ? Response.ok(performers).build()
                 : Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+
+    @GET
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/login")
+    public Response authUser(User user) {
+        User u;
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+
+        try {
+            em.getTransaction().begin();
+            u = em.createQuery("SELECT u FROM User u WHERE u.username = ?1 AND u.password = ?2", User.class)
+                    .setParameter(1, user.getUsername())
+                    .setParameter(2, user.getPassword())
+                    .getSingleResult();
+            em.getTransaction().commit();
+        }
+        catch (NoResultException e) { u = null; }
+        finally { em.close(); }
+
+        return u != null ? Response.ok(u).cookie(getCookie(u)).build()
+                         : Response.status(Status.UNAUTHORIZED).build();
+    }
+
+    private NewCookie getCookie(User user) {
+        return new NewCookie("auth", Integer.toString(user.hashCode()));
     }
 
 }
