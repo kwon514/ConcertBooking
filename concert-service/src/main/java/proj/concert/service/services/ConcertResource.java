@@ -124,9 +124,7 @@ public class ConcertResource {
 
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
-    @GET
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/login")
     public Response authUser(User user) {
@@ -144,7 +142,7 @@ public class ConcertResource {
         catch (NoResultException e) { u = null; }
         finally { em.close(); }
 
-        return u != null ? Response.ok(u).cookie(getCookie(u)).build()
+        return u != null ? Response.ok().cookie(getCookie(u)).build()
                          : Response.status(Status.UNAUTHORIZED).build();
     }
 
