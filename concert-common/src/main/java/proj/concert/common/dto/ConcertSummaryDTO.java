@@ -1,5 +1,7 @@
 package proj.concert.common.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Represents a small portion of the information about a concert. Intended to be used when not all info is requred.
  *
@@ -7,6 +9,8 @@ package proj.concert.common.dto;
  * title      the concert's title
  * imageName  the concert's image name
  */
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ConcertSummaryDTO {
 
     private Long id;
