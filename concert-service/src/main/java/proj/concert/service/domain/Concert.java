@@ -42,7 +42,6 @@ public class Concert implements Comparable<Concert> {
     @Column(name = "IMAGE_NAME")
     private String imageName;
 
-    @Lob
     @Column(name = "BLURB", length = 1000)
     private String blurb;
 
@@ -102,8 +101,6 @@ public class Concert implements Comparable<Concert> {
         this.blurb = blurb;
     }
 
-    @JsonSerialize(contentUsing = LocalDateTimeSerializer.class)
-    @JsonDeserialize(contentUsing = LocalDateTimeDeserializer.class)
     public Set<LocalDateTime> getDates() {
         return dates;
     }
