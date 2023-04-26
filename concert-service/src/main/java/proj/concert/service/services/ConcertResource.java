@@ -27,6 +27,7 @@ public class ConcertResource {
     // private static Logger LOGGER =
     // LoggerFactory.getLogger(ConcertResource.class);
 
+
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
     @GET
@@ -43,9 +44,11 @@ public class ConcertResource {
         } finally {
             em.close();
         }
+
         return concert != null ? Response.ok(ConcertMapper.toConcertDTO(concert)).build()
                 : Response.status(Response.Status.NOT_FOUND).build();
     }
+
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -72,6 +75,7 @@ public class ConcertResource {
                 : Response.status(Response.Status.NO_CONTENT).build();
     }
 
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/concerts/summaries")
@@ -97,6 +101,7 @@ public class ConcertResource {
                 : Response.status(Response.Status.NO_CONTENT).build();
     }
 
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/performers/{id}")
@@ -115,6 +120,7 @@ public class ConcertResource {
         return performer != null ? Response.ok(PerformerMapper.toPerformerDTO(performer)).build()
                 : Response.status(Response.Status.NOT_FOUND).build();
     }
+
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -141,34 +147,35 @@ public class ConcertResource {
                 : Response.status(Response.Status.NO_CONTENT).build();
     }
 
+
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/login")
-    public Response authUser(User user) {
-        User u;
+    public Response authUser(UserDTO userDTO) {
+        User user;
         EntityManager em = PersistenceManager.instance().createEntityManager();
 
         try {
             em.getTransaction().begin();
-            u = em.createQuery("SELECT u FROM User u WHERE u.username = ?1 AND u.password = ?2", User.class)
-                    .setParameter(1, user.getUsername())
-                    .setParameter(2, user.getPassword())
+            user = em.createQuery("SELECT u FROM User u WHERE u.username = ?1 AND u.password = ?2", User.class)
+                    .setParameter(1, userDTO.getUsername())
+                    .setParameter(2, userDTO.getPassword())
                     .getSingleResult();
             em.getTransaction().commit();
         } catch (NoResultException e) {
-            u = null;
+            user = null;
         } finally {
             em.close();
         }
 
-        return u != null ? Response.ok().cookie(getCookie(u)).build()
+        return user != null ? Response.ok().cookie(getCookie(user.hashCode())).build()
                 : Response.status(Status.UNAUTHORIZED).build();
     }
 
-    private NewCookie getCookie(User user) {
-        return new NewCookie("auth", Integer.toString(user.hashCode()));
+    private NewCookie getCookie(int id) {
+        return new NewCookie("auth", Integer.toString(id));
     }
 
 }
