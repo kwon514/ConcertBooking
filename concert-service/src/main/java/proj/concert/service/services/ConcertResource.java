@@ -13,18 +13,19 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import proj.concert.common.dto.*;
+
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 
-import proj.concert.service.domain.Concert;
-import proj.concert.service.domain.Performer;
-import proj.concert.service.domain.User;
-
+import proj.concert.service.domain.*;
+import proj.concert.service.mapper.*;;
 
 @Path("/concert-service")
 public class ConcertResource {
 
-    // private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
+    // private static Logger LOGGER =
+    // LoggerFactory.getLogger(ConcertResource.class);
 
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
 
@@ -42,8 +43,8 @@ public class ConcertResource {
         } finally {
             em.close();
         }
-
-        return concert != null ? Response.ok(concert).build() : Response.status(Response.Status.NOT_FOUND).build();
+        return concert != null ? Response.ok(ConcertMapper.toConcertDTO(concert)).build()
+                : Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -62,7 +63,13 @@ public class ConcertResource {
             em.close();
         }
 
-        return concerts != null ? Response.ok(concerts).build() : Response.status(Response.Status.NO_CONTENT).build();
+        ConcertDTO[] concertDTOs = new ConcertDTO[concerts.length];
+        for (int i = 0; i < concerts.length; i++) {
+            concertDTOs[i] = ConcertMapper.toConcertDTO(concerts[i]);
+        }
+
+        return concertDTOs != null ? Response.ok(concertDTOs).build()
+                : Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @GET
@@ -81,7 +88,13 @@ public class ConcertResource {
             em.close();
         }
 
-        return concerts != null ? Response.ok(concerts).build() : Response.status(Response.Status.NO_CONTENT).build();
+        ConcertSummaryDTO[] concertSummaryDTOs = new ConcertSummaryDTO[concerts.length];
+        for (int i = 0; i < concerts.length; i++) {
+            concertSummaryDTOs[i] = ConcertMapper.toConcertSummaryDTO(concerts[i]);
+        }
+
+        return concerts != null ? Response.ok(concertSummaryDTOs).build()
+                : Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @GET
@@ -99,7 +112,8 @@ public class ConcertResource {
             em.close();
         }
 
-        return performer != null ? Response.ok(performer).build() : Response.status(Response.Status.NOT_FOUND).build();
+        return performer != null ? Response.ok(PerformerMapper.toPerformerDTO(performer)).build()
+                : Response.status(Response.Status.NOT_FOUND).build();
     }
 
     @GET
@@ -118,7 +132,12 @@ public class ConcertResource {
             em.close();
         }
 
-        return performers != null ? Response.ok(performers).build()
+        PerformerDTO[] performerDTOs = new PerformerDTO[performers.length];
+        for (int i = 0; i < performers.length; i++) {
+            performerDTOs[i] = PerformerMapper.toPerformerDTO(performers[i]);
+        }
+
+        return performers != null ? Response.ok(performerDTOs).build()
                 : Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -138,12 +157,14 @@ public class ConcertResource {
                     .setParameter(2, user.getPassword())
                     .getSingleResult();
             em.getTransaction().commit();
+        } catch (NoResultException e) {
+            u = null;
+        } finally {
+            em.close();
         }
-        catch (NoResultException e) { u = null; }
-        finally { em.close(); }
 
         return u != null ? Response.ok().cookie(getCookie(u)).build()
-                         : Response.status(Status.UNAUTHORIZED).build();
+                : Response.status(Status.UNAUTHORIZED).build();
     }
 
     private NewCookie getCookie(User user) {
