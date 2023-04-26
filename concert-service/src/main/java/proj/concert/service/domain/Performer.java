@@ -30,7 +30,6 @@ public class Performer {
     @Column(name = "GENRE")
     private Genre genre;
 
-    @Lob
     @Column(name = "BLURB", length = 1000)
     private String blurb;
 
