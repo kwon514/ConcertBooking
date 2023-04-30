@@ -1,13 +1,20 @@
 package proj.concert.service.services;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
@@ -176,6 +183,55 @@ public class ConcertResource {
 
     private NewCookie getCookie(int id) {
         return new NewCookie("auth", Integer.toString(id));
+    }
+
+
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/seats/{date}")
+    public Response getSeats(
+            @PathParam("date") String date,
+            @QueryParam("status") String status
+    ) {
+        // evaluate query
+        String qlString = "SELECT s FROM Seat s WHERE s.date=?1";
+        switch (status) {
+            case "Booked"  : qlString += " AND s.isBooked=true"; break;
+            case "Unbooked": qlString += " AND s.isBooked=false";
+        }
+
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        List<Seat> seats;
+        try {
+            em.getTransaction().begin();
+            seats = em.createQuery(qlString, Seat.class)
+                    .setParameter(1, LocalDateTime.parse(date))
+                    .getResultList();
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
+
+        List<SeatDTO> seatDTOs = new ArrayList<SeatDTO>();
+        seats.forEach(e -> seatDTOs.add(SeatMapper.mapSeat(e)));      
+
+        return Response.ok(seatDTOs).build();
+    }
+
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/bookings")
+    // TODO BookingRequestDTO compatibility issues; encounters 400 error
+    public Response makeBooking(@CookieParam("auth") Cookie auth) {
+        if (auth == null) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        }
+
+        // TODO Make Successful Booking
+        return Response.created(null).build();
     }
 
 }
