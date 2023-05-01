@@ -1,39 +1,30 @@
 package proj.concert.service.services;
 
-import java.net.URI;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import proj.concert.common.dto.*;
+import proj.concert.service.domain.*;
+import proj.concert.service.mapper.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import proj.concert.common.dto.*;
-
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 
-import proj.concert.service.domain.*;
-import proj.concert.service.mapper.*;;
 
 @Path("/concert-service")
 public class ConcertResource {
 
-    // private static Logger LOGGER =
-    // LoggerFactory.getLogger(ConcertResource.class);
+    // private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
 
 
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -184,75 +175,6 @@ public class ConcertResource {
 
     private NewCookie getCookie(int id) {
         return new NewCookie("auth", Integer.toString(id));
-    }
-
-
-    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/seats/{date}")
-    public Response getSeats(
-            @PathParam("date") String date,
-            @QueryParam("status") String status
-    ) {
-        // evaluate query
-        String qlString = "SELECT s FROM Seat s WHERE s.date=?1";
-        switch (status) {
-            case "Booked"  : qlString += " AND s.isBooked=true"; break;
-            case "Unbooked": qlString += " AND s.isBooked=false";
-        }
-
-        EntityManager em = PersistenceManager.instance().createEntityManager();
-        List<Seat> seats;
-        try {
-            em.getTransaction().begin();
-            seats = em.createQuery(qlString, Seat.class)
-                    .setParameter(1, LocalDateTime.parse(date))
-                    .getResultList();
-            em.getTransaction().commit();
-        } finally {
-            em.close();
-        }
-
-        List<SeatDTO> seatDTOs = new ArrayList<SeatDTO>();
-        seats.forEach(e -> seatDTOs.add(SeatMapper.mapSeat(e)));      
-
-        return Response.ok(seatDTOs).build();
-    }
-
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Path("/bookings")
-    public Response makeBooking(
-        BookingRequestDTO bookingRequestDTO,
-        @CookieParam("auth") Cookie auth
-    ) {
-        // unauthorised
-        if (auth == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
-
-        // authorised
-        EntityManager em = PersistenceManager.instance().createEntityManager();
-        try {
-            em.getTransaction().begin();
-            for (String seatLabel : bookingRequestDTO.getSeatLabels()) {
-                Seat seat = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label=?2", Seat.class)
-                        .setParameter(1, bookingRequestDTO.getDate())
-                        .setParameter(2, seatLabel)
-                        .getSingleResult();
-                seat.setBooked(true);
-                em.merge(seat);
-            }
-            em.getTransaction().commit();
-        } finally {
-            em.close();
-        }
-
-        // dummy URI
-        return Response.created(URI.create("")).build();
     }
 
 }
