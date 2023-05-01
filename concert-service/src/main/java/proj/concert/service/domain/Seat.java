@@ -1,15 +1,20 @@
 package proj.concert.service.domain;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
 import javax.persistence.*;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
+@NamedQueries({
+    @NamedQuery(name="Seat.getAny", query="SELECT s FROM Seat s WHERE s.date=?1"),
+    @NamedQuery(name="Seat.getBooked", query="SELECT s FROM Seat s WHERE s.date=?1 AND s.isBooked=true"),
+    @NamedQuery(name="Seat.getUnbooked", query="SELECT s FROM Seat s WHERE s.date=?1 AND s.isBooked=false")
+})
 public class Seat {
 
 	@Id
