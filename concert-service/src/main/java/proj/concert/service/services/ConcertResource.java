@@ -1,5 +1,6 @@
 package proj.concert.service.services;
 
+import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -224,14 +225,34 @@ public class ConcertResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/bookings")
-    // TODO BookingRequestDTO compatibility issues; encounters 400 error
-    public Response makeBooking(@CookieParam("auth") Cookie auth) {
+    public Response makeBooking(
+        BookingRequestDTO bookingRequestDTO,
+        @CookieParam("auth") Cookie auth
+    ) {
+        // unauthorised
         if (auth == null) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
-        // TODO Make Successful Booking
-        return Response.created(null).build();
+        // authorised
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        try {
+            em.getTransaction().begin();
+            for (String seatLabel : bookingRequestDTO.getSeatLabels()) {
+                Seat seat = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label=?2", Seat.class)
+                        .setParameter(1, bookingRequestDTO.getDate())
+                        .setParameter(2, seatLabel)
+                        .getSingleResult();
+                seat.setBooked(true);
+                em.merge(seat);
+            }
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
+
+        // dummy URI
+        return Response.created(URI.create("")).build();
     }
 
 }
