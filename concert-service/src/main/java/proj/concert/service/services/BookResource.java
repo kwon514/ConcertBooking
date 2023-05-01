@@ -6,7 +6,6 @@ import proj.concert.service.mapper.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -41,19 +40,12 @@ public class BookResource
             @PathParam("date") String date,
             @QueryParam("status") String status
     ) {
-        // evaluate query
-        String qlString = "SELECT s FROM Seat s WHERE s.date=?1";
-        switch (status) {
-            case "Booked"  : qlString += " AND s.isBooked=true"; break;
-            case "Unbooked": qlString += " AND s.isBooked=false";
-        }
-
         List<Seat> seats;
 
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
             em.getTransaction().begin();
-            seats = em.createQuery(qlString, Seat.class)
+            seats = em.createNamedQuery("Seat.get"+status, Seat.class)
                     .setParameter(1, LocalDateTime.parse(date))
                     .getResultList();
             em.getTransaction().commit();
@@ -61,8 +53,7 @@ public class BookResource
             em.close();
         }
 
-        List<SeatDTO> seatDTOs = new ArrayList<SeatDTO>();
-        seats.forEach(e -> seatDTOs.add(SeatMapper.mapSeat(e)));      
+        List<SeatDTO> seatDTOs = SeatMapper.mapSeats(seats);
 
         return Response.ok(seatDTOs).build();
     }
