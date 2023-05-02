@@ -24,17 +24,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("/concert-service")
 public class BookResource {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
-
-    // get seats
+    // Get seats by date
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
     @Path("/seats/{date}")
@@ -59,7 +54,7 @@ public class BookResource {
         return Response.ok(seatDTOs).build();
     }
 
-    // make booking
+    // Make a booking
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @POST
     @Path("/bookings")
@@ -109,7 +104,7 @@ public class BookResource {
         return Response.created(URI.create("/concert-service/bookings/" + booking.getId())).build();
     }
 
-    // get booking
+    // Get all bookings for a user
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
     @Path("/bookings")
@@ -140,7 +135,7 @@ public class BookResource {
         return bookings != null ? Response.ok(bookingDTOs).build() : Response.status(Status.NOT_FOUND).build();
     }
 
-    // get booking by id
+    // Get a booking for the user by id
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
     @Path("/bookings/{id}")
