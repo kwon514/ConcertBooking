@@ -169,12 +169,12 @@ public class ConcertResource {
             em.close();
         }
 
-        return user != null ? Response.ok().cookie(getCookie(user.hashCode())).build()
+        return user != null ? Response.ok().cookie(getCookie(user.getId())).build()
                 : Response.status(Status.UNAUTHORIZED).build();
     }
 
-    private NewCookie getCookie(int id) {
-        return new NewCookie("auth", Integer.toString(id));
+    private NewCookie getCookie(Long id) {
+        return new NewCookie("auth", Long.toString(id));
     }
 
 }
