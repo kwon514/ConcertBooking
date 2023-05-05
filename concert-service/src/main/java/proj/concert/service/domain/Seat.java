@@ -21,6 +21,9 @@ public class Seat {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	Long id;
 
+	@Version
+	private long version;
+
 	private String label;
 	private boolean isBooked;
 	private LocalDateTime date;
