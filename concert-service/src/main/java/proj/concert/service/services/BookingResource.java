@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
+import javax.persistence.OptimisticLockException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
@@ -80,6 +82,7 @@ public class BookingResource {
             List<Seat> seats = new ArrayList<>();
             for (String seatLabel : bookingRequestDTO.getSeatLabels()) {
                 Seat seat = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label=?2", Seat.class)
+                        .setLockMode(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
                         .setParameter(1, bookingRequestDTO.getDate())
                         .setParameter(2, seatLabel)
                         .getSingleResult();
@@ -91,11 +94,17 @@ public class BookingResource {
                 seats.add(seat);
             }
 
-            booking = new Booking(Long.valueOf(auth.getValue()), bookingRequestDTO.getConcertId(),
-                    bookingRequestDTO.getDate(), seats);
+            booking = new Booking(
+                    Long.valueOf(auth.getValue()),
+                    bookingRequestDTO.getConcertId(),
+                    bookingRequestDTO.getDate(),
+                    seats
+            );
             em.persist(booking);
             em.getTransaction().commit();
         } catch (NoResultException e) {
+            return Response.status(Status.BAD_REQUEST).build();
+        } catch (OptimisticLockException e) {
             return Response.status(Status.BAD_REQUEST).build();
         } finally {
             em.close();
