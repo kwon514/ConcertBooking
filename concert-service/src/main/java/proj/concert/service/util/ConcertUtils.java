@@ -1,11 +1,7 @@
 package proj.concert.service.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import proj.concert.service.domain.Concert;
 import proj.concert.service.domain.Seat;
-import proj.concert.service.services.ConcertApplication;
 import proj.concert.service.services.PersistenceManager;
 
 import javax.persistence.EntityManager;
@@ -15,16 +11,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
+
+
 public class ConcertUtils {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ConcertUtils.class);
+    //private static Logger LOGGER = LoggerFactory.getLogger(ConcertUtils.class);
 
     /**
      * This method will clear all seat and booking data from the database. Then, it will create all Seat objects for
      * all concerts and dates.
      */
     public static void initConcerts() {
-        LOGGER.debug("initConcerts(): Creating the Application");
+        //LOGGER.debug("initConcerts(): Creating the Application");
 
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
@@ -42,17 +42,17 @@ public class ConcertUtils {
             }
             em.getTransaction().commit();
 
-            LOGGER.debug("initConcerts(): There are " + allDates.size() + " concert dates");
+            //LOGGER.debug("initConcerts(): There are " + allDates.size() + " concert dates");
 
             // For each concert date, create the seats for that date and persist them.
-            int seatCount = 0;
+            //int seatCount = 0;
             for (LocalDateTime date : allDates) {
 
                 em.getTransaction().begin();
                 Set<Seat> seatsForDate = TheatreLayout.createSeatsFor(date);
                 for (Seat s : seatsForDate) {
                     em.persist(s);
-                    seatCount++;
+                    //seatCount++;
                 }
                 em.getTransaction().commit();
 
@@ -60,7 +60,7 @@ public class ConcertUtils {
                 em.clear();
             }
 
-            LOGGER.debug("initConcerts(): Created " + seatCount + " seats!");
+            //LOGGER.debug("initConcerts(): Created " + seatCount + " seats!");
         } finally {
             em.close();
         }
