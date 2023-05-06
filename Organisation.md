@@ -1,12 +1,12 @@
 # Organisation
 
 * Rachel (UPI: rwu050, GitHub Identifier: rwu050)
-    * Implemented the aynchronous subscribe / publish concert subscription functionality. 
+    * Implemented the asynchronous subscribe / publish concert subscription functionality. 
     * Implemented the SubscribeResource class to handle and store subscriptions.
     * Added required annotations to DTOs related to subscription service.
     * Performed code review to ensure code was well-commented.
 * Kevin (UPI: kwon514, GitHub Identifier: kwon514)
-    * Implemented the Concert Domain Model which included the Concert, Performer, Seat, and User classes.
+    * Implemented the Concert Domain Model.
     * Implemented mapper classes.
     * Implemented the ConcertResource class.
     * Worked on implementing the seat booking system.
@@ -24,4 +24,4 @@ Strategy used to minimise chance of concurrency errors in program execution:
 
 Domain model organisation:
 
-* The domain model is organised into 5 domain classes: Booking, Concert, Performer, Seat, and User. These 5 classes were sufficient to maintain in the database for our implementation.
+* The domain model is organised into 5 domain classes: Booking, Concert, Performer, Seat, and User. These 5 classes were sufficient to maintain in the database for our implementation. We made use of eager fetching within the web service for concert and performers, concert and dates, and bookings and seats.
