@@ -28,6 +28,9 @@ import javax.ws.rs.core.Response.Status;
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("/concert-service")
 public class BookingResource {
+    
+    // create an instance of the SubscribeResource class so we can call the sendNotification method.
+    private final SubscribeResource subscribeResource = new SubscribeResource();
 
     // Get seats by date
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -90,16 +93,22 @@ public class BookingResource {
                 em.merge(seat);
                 seats.add(seat);
             }
+            
 
             booking = new Booking(Long.valueOf(auth.getValue()), bookingRequestDTO.getConcertId(),
                     bookingRequestDTO.getDate(), seats);
+
             em.persist(booking);
             em.getTransaction().commit();
+
         } catch (NoResultException e) {
             return Response.status(Status.BAD_REQUEST).build();
         } finally {
             em.close();
-        }
+        }    
+
+        // when a new booking is made, we need to check if we need to send a notification to the subscribers.
+        subscribeResource.sendNotification(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate());
 
         return Response.created(URI.create("/concert-service/bookings/" + booking.getId())).build();
     }
