@@ -101,6 +101,11 @@ public class SubscribeResource {
      */
     public static void sendNotification(Long concertId, LocalDateTime time) {
         threadPool.submit(() -> {
+            // we don't need to send a notification if the concert has no subscribers.
+            if (!subscriptions.containsKey(concertId)) {
+                return;
+            }
+
             // we must query the seats to find all the seats that are booked for the given concert time.
             List<Seat> seats = getSeats(time, "Booked");            
             // we query to find the actual amount of seats booked in the given concert.
@@ -110,16 +115,11 @@ public class SubscribeResource {
             // we calculate the percentage of seats that have been booked by using the NUM_SEATS_IN_THEATRE.
             final var percentageOfBookedSeats = (numOfSeatsBooked / (double)totalNumOfSeats) * 100.0;
 
-            // we don't need to send a notification if the concert has no subscribers.
-            if (!subscriptions.containsKey(concertId)) {
-                return;
-            }
-
             // otherwise, we will need to go through all the subscriptions of that concert 
             // and send them a notification if the percentage of actual seats booked exceeds their desired percentage.
             for (Subscription subscription : subscriptions.get(concertId)) {
                 if (percentageOfBookedSeats > (float)subscription.getConcertInfoSubscriptionDTO().getPercentageBooked()) {
-                    // we then need to resume the AsyncResponses to send out the notifiation of how many seats are remaining.
+                    // we then need to resume the AsyncResponses to send out the notification of how many seats are remaining.
                     subscription.getAsyncResponse().resume(
                                 Response
                                     .status(Response.Status.OK)

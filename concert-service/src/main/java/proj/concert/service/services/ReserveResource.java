@@ -142,8 +142,10 @@ public class ReserveResource {
             @PathParam("id") long id,
             @CookieParam("auth") Cookie auth
     ) {
+        // client can only get booking if authenticated.
         if (auth == null) return Response.status(Status.UNAUTHORIZED).build();
         // ---------------------------------------------------------------------
+        // check if bookingId provided exists.
         Booking booking = get(Booking.class, id);
         if (booking == null) return Response.status(Status.NOT_FOUND).build();
 
@@ -157,6 +159,7 @@ public class ReserveResource {
     @GET
     @Path("/bookings")
     public Response getBookings(@CookieParam("auth") Cookie auth) {
+        // client can only get bookings if authenticated.
         if (auth == null) return Response.status(Status.UNAUTHORIZED).build();
         // ---------------------------------------------------------------------
         EntityManager em = PersistenceManager.instance().createEntityManager();

@@ -14,16 +14,10 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
-
 
 @Produces(MediaType.APPLICATION_JSON)
 @Path("/concert-service")
 public class ConcertResource {
-
-    // private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
-
 
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     // CONCERTS
