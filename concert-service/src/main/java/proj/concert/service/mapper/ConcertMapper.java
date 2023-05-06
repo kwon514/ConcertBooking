@@ -59,5 +59,4 @@ public class ConcertMapper {
     public static List<PerformerDTO> toPerformerDTOs(Collection<Performer> performers) {
         return performers.stream().map(e -> toPerformerDTO(e)).collect(Collectors.toList());
     }
-
 }
