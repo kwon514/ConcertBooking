@@ -1,5 +1,9 @@
 package proj.concert.service.services;
 
+import proj.concert.common.dto.*;
+import proj.concert.service.domain.*;
+import proj.concert.service.mapper.*;
+
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.ws.rs.Consumes;
@@ -13,19 +17,14 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import proj.concert.common.dto.*;
-
 // import org.slf4j.Logger;
 // import org.slf4j.LoggerFactory;
 
-import proj.concert.service.domain.*;
-import proj.concert.service.mapper.*;;
 
 @Path("/concert-service")
 public class ConcertResource {
 
-    // private static Logger LOGGER =
-    // LoggerFactory.getLogger(ConcertResource.class);
+    // private static Logger LOGGER = LoggerFactory.getLogger(ConcertResource.class);
 
 
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
@@ -170,12 +169,12 @@ public class ConcertResource {
             em.close();
         }
 
-        return user != null ? Response.ok().cookie(getCookie(user.hashCode())).build()
+        return user != null ? Response.ok().cookie(getCookie(user.getId())).build()
                 : Response.status(Status.UNAUTHORIZED).build();
     }
 
-    private NewCookie getCookie(int id) {
-        return new NewCookie("auth", Integer.toString(id));
+    private NewCookie getCookie(Long id) {
+        return new NewCookie("auth", Long.toString(id));
     }
 
 }
