@@ -10,7 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.persistence.LockModeType;
 import javax.persistence.NoResultException;
+import javax.persistence.OptimisticLockException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
@@ -64,45 +66,56 @@ public class BookingResource {
     public Response makeBooking(
             BookingRequestDTO bookingRequestDTO,
             @CookieParam("auth") Cookie auth) {
+        // UNAUTHORISED
         if (auth == null) {
             return Response.status(Status.UNAUTHORIZED).build();
         }
 
+        // AUTHORISED
         Booking booking;
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
             em.getTransaction().begin();
 
-            // Check if the concert exists
+            // Verify concert id and date
             Concert concert = em.find(Concert.class, bookingRequestDTO.getConcertId());
-            if (concert == null) {
-                return Response.status(Status.BAD_REQUEST).entity("Concert not found").build();
+            if (concert == null || !concert.getDates().contains(bookingRequestDTO.getDate())) {
+                throw new NoResultException("Concert not found");
             }
 
-            // Book the seats
-            List<Seat> seats = new ArrayList<>();
-            for (String seatLabel : bookingRequestDTO.getSeatLabels()) {
-                Seat seat = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label=?2", Seat.class)
-                        .setParameter(1, bookingRequestDTO.getDate())
-                        .setParameter(2, seatLabel)
-                        .getSingleResult();
-                if (seat.isBooked()) {
-                    return Response.status(Status.FORBIDDEN).entity("Seat already booked").build();
-                }
-                seat.setBooked(true);
-                em.merge(seat);
-                seats.add(seat);
+            // Query seats
+            List<Seat> seats = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label IN ?2 AND s.isBooked=false", Seat.class)
+                    .setLockMode(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
+                    .setParameter(1, bookingRequestDTO.getDate())
+                    .setParameter(2, bookingRequestDTO.getSeatLabels())
+                    .getResultList();
+
+            // Verify seats are booked
+            // TODO different exception?
+            if (seats.size() != bookingRequestDTO.getSeatLabels().size()) {
+                throw new OptimisticLockException("Seat(s) already booked");
             }
-            
 
-            booking = new Booking(Long.valueOf(auth.getValue()), bookingRequestDTO.getConcertId(),
-                    bookingRequestDTO.getDate(), seats);
+            // Update seats
+            seats.forEach(e -> {
+                e.setBooked(true);
+                em.merge(e);
+            });
 
+            booking = new Booking(
+                    Long.valueOf(auth.getValue()),
+                    bookingRequestDTO.getConcertId(),
+                    bookingRequestDTO.getDate(),
+                    seats
+            );
             em.persist(booking);
+
             em.getTransaction().commit();
 
         } catch (NoResultException e) {
-            return Response.status(Status.BAD_REQUEST).build();
+            return Response.status(Status.BAD_REQUEST).entity(e).build();
+        } catch (OptimisticLockException e) {
+            return Response.status(Status.FORBIDDEN).entity(e).build();
         } finally {
             em.close();
         }    
