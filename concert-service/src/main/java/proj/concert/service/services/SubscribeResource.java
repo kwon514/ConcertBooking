@@ -118,7 +118,7 @@ public class SubscribeResource {
     // from here, it can check all the subscriptions for that particular concertID 
     // and can send a notification to the subscribers. 
     // this function needs to be called after a booking is made so that a notification can be sent.
-    public void sendNotification(Long concertId, LocalDateTime time) {
+    public static void sendNotification(Long concertId, LocalDateTime time) {
         threadPool.submit(() -> {
             EntityManager em = PersistenceManager.instance().createEntityManager();
             

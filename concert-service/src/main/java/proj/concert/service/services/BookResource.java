@@ -3,10 +3,10 @@ package proj.concert.service.services;
 import proj.concert.common.dto.*;
 import proj.concert.service.domain.*;
 import proj.concert.service.mapper.*;
+import static proj.concert.service.services.Services.*;
 
 import java.net.URI;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -23,85 +23,103 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
 
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("/concert-service")
-public class BookingResource {
-    
-    // create an instance of the SubscribeResource class so we can call the sendNotification method.
-    private final SubscribeResource subscribeResource = new SubscribeResource();
+public class BookResource {
 
-    // Get seats by date
+    // generate cookie
+    private NewCookie getCookie(Long id) {
+        return new NewCookie("auth", Long.toString(id));
+    }
+
+    // authorise user
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+    @POST
+    @Path("/login")
+    public Response authUser(UserDTO userDTO) {
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        try {
+            User user = em
+                    .createQuery("SELECT u FROM User u WHERE u.username=?1 AND u.password=?2", User.class)
+                    .setParameter(1, userDTO.getUsername())
+                    .setParameter(2, userDTO.getPassword())
+                    .getSingleResult();
+            return Response.ok().cookie(getCookie(user.getId())).build();
+        } catch (NoResultException e) {
+            return Response.status(Status.UNAUTHORIZED).build();
+        } finally {
+            em.close();
+        }
+    }
+
+
+    // get seats
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
     @Path("/seats/{date}")
     public Response getSeats(
             @PathParam("date") String date,
-            @QueryParam("status") String status) {
-        List<Seat> seats;
-
+            @QueryParam("status") String status
+    ) {
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
-            em.getTransaction().begin();
-            seats = em.createNamedQuery("Seat.get" + status, Seat.class)
+            List<Seat> seats = em
+                    .createNamedQuery("Seat.get" + status, Seat.class)
                     .setParameter(1, LocalDateTime.parse(date))
                     .getResultList();
-            em.getTransaction().commit();
+            return Response.ok(generify(BookMapper.toSeatDTOs(seats))).build();
         } finally {
             em.close();
         }
-
-        List<SeatDTO> seatDTOs = SeatMapper.mapSeats(seats);
-
-        return Response.ok(seatDTOs).build();
     }
 
-    // Make a booking
+
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+    // BOOKINGS
+    // _________________________________________________________________________
+
+    // make booking
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @POST
     @Path("/bookings")
     public Response makeBooking(
             BookingRequestDTO bookingRequestDTO,
-            @CookieParam("auth") Cookie auth) {
-        // UNAUTHORISED
-        if (auth == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
-
-        // AUTHORISED
+            @CookieParam("auth") Cookie auth
+    ) {
+        if (auth == null) return Response.status(Status.UNAUTHORIZED).build();
+        // ---------------------------------------------------------------------
         Booking booking;
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
+            // begin transaction
             em.getTransaction().begin();
-
-            // Verify concert id and date
+            // query and verify concert
             Concert concert = em.find(Concert.class, bookingRequestDTO.getConcertId());
             if (concert == null || !concert.getDates().contains(bookingRequestDTO.getDate())) {
                 throw new NoResultException("Concert not found");
             }
-
-            // Query seats
-            List<Seat> seats = em.createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label IN ?2 AND s.isBooked=false", Seat.class)
+            // query and verify seats
+            List<Seat> seats = em
+                    .createQuery("SELECT s FROM Seat s WHERE s.date=?1 AND s.label IN ?2 AND s.isBooked=false", Seat.class)
                     .setLockMode(LockModeType.OPTIMISTIC_FORCE_INCREMENT)
                     .setParameter(1, bookingRequestDTO.getDate())
                     .setParameter(2, bookingRequestDTO.getSeatLabels())
                     .getResultList();
-
-            // Verify seats are booked
-            // TODO different exception?
             if (seats.size() != bookingRequestDTO.getSeatLabels().size()) {
                 throw new OptimisticLockException("Seat(s) already booked");
             }
-
-            // Update seats
-            seats.forEach(e -> {
-                e.setBooked(true);
-                em.merge(e);
-            });
-
+            // merge seats
+            for (Seat seat : seats) {
+                seat.setBooked(true);
+                em.merge(seat);
+            }
+            // persist booking
             booking = new Booking(
                     Long.valueOf(auth.getValue()),
                     bookingRequestDTO.getConcertId(),
@@ -109,82 +127,57 @@ public class BookingResource {
                     seats
             );
             em.persist(booking);
-
+            // commit transaction
             em.getTransaction().commit();
-
         } catch (NoResultException e) {
             return Response.status(Status.BAD_REQUEST).entity(e).build();
         } catch (OptimisticLockException e) {
             return Response.status(Status.FORBIDDEN).entity(e).build();
         } finally {
             em.close();
-        }    
+        }
 
         // when a new booking is made, we need to check if we need to send a notification to the subscribers.
-        subscribeResource.sendNotification(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate());
+        SubscribeResource.sendNotification(bookingRequestDTO.getConcertId(), bookingRequestDTO.getDate());
 
         return Response.created(URI.create("/concert-service/bookings/" + booking.getId())).build();
     }
 
-    // Get all bookings for a user
-    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
-    @GET
-    @Path("/bookings")
-    public Response getBooking(
-            @CookieParam("auth") Cookie auth) {
-        if (auth == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
-
-        List<Booking> bookings;
-        EntityManager em = PersistenceManager.instance().createEntityManager();
-        try {
-            em.getTransaction().begin();
-            bookings = em.createQuery("SELECT b FROM Booking b WHERE b.userId=?1", Booking.class)
-                    .setParameter(1, Long.valueOf(auth.getValue()))
-                    .getResultList();
-            em.getTransaction().commit();
-        } catch (NoResultException e) {
-            return Response.status(Status.NOT_FOUND).build();
-        } finally {
-            em.close();
-        }
-
-        List<BookingDTO> bookingDTOs = new ArrayList<>();
-        for (Booking booking : bookings) {
-            bookingDTOs.add(BookingMapper.toBookingDTO(booking));
-        }
-        return bookings != null ? Response.ok(bookingDTOs).build() : Response.status(Status.NOT_FOUND).build();
-    }
-
-    // Get a booking for the user by id
+    // get booking
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
     @Path("/bookings/{id}")
-    public Response getBookingById(
+    public Response getBooking(
             @PathParam("id") long id,
-            @CookieParam("auth") Cookie auth) {
-        if (auth == null) {
-            return Response.status(Status.UNAUTHORIZED).build();
-        }
+            @CookieParam("auth") Cookie auth
+    ) {
+        if (auth == null) return Response.status(Status.UNAUTHORIZED).build();
+        // ---------------------------------------------------------------------
+        Booking booking = get(Booking.class, id);
+        if (booking == null) return Response.status(Status.NOT_FOUND).build();
 
-        Booking booking;
+        return booking.getUserId() == Long.valueOf(auth.getValue()) ?
+                Response.ok(BookMapper.toBookingDTO(booking)).build() :
+                Response.status(Status.FORBIDDEN).build();
+    }
+
+    // get bookings
+    // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
+    @GET
+    @Path("/bookings")
+    public Response getBookings(@CookieParam("auth") Cookie auth) {
+        if (auth == null) return Response.status(Status.UNAUTHORIZED).build();
+        // ---------------------------------------------------------------------
         EntityManager em = PersistenceManager.instance().createEntityManager();
         try {
-            em.getTransaction().begin();
-            booking = em.createQuery("SELECT b FROM Booking b WHERE b.id=?1", Booking.class)
-                    .setParameter(1, id)
-                    .getSingleResult();
-            em.getTransaction().commit();
-        } catch (NoResultException e) {
-            return Response.status(Status.NOT_FOUND).build();
+            List<Booking> bookings = em
+                    .createQuery("SELECT b FROM Booking b WHERE b.userId=?1", Booking.class)
+                    .setParameter(1, Long.valueOf(auth.getValue()))
+                    .getResultList();
+            return Response.ok(generify(BookMapper.toBookingDTOs(bookings))).build();
         } finally {
             em.close();
         }
-        if (booking.getUserId() != Long.valueOf(auth.getValue())) {
-            return Response.status(Status.FORBIDDEN).build();
-        }
-        return booking != null ? Response.ok(BookingMapper.toBookingDTO(booking)).build()
-                : Response.status(Status.NOT_FOUND).build();
     }
+
 }
