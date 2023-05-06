@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-public class BookMapper {
+public class ReserveMapper {
 
     // booking to booking dto
     public static BookingDTO toBookingDTO(Booking booking) {

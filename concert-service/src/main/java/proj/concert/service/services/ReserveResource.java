@@ -30,7 +30,7 @@ import javax.ws.rs.core.Response.Status;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Path("/concert-service")
-public class BookResource {
+public class ReserveResource {
 
     // generate cookie
     private NewCookie getCookie(Long id) {
@@ -67,7 +67,7 @@ public class BookResource {
     ) {
         List<Seat> seats = Services.getSeats(date, status);
 
-        return Response.ok(generify(BookMapper.toSeatDTOs(seats))).build();
+        return Response.ok(generify(ReserveMapper.toSeatDTOs(seats))).build();
     }
 
 
@@ -148,7 +148,7 @@ public class BookResource {
         if (booking == null) return Response.status(Status.NOT_FOUND).build();
 
         return booking.getUserId() == Long.valueOf(auth.getValue()) ?
-                Response.ok(BookMapper.toBookingDTO(booking)).build() :
+                Response.ok(ReserveMapper.toBookingDTO(booking)).build() :
                 Response.status(Status.FORBIDDEN).build();
     }
 
@@ -165,7 +165,7 @@ public class BookResource {
                     .createQuery("SELECT b FROM Booking b WHERE b.userId=?1", Booking.class)
                     .setParameter(1, Long.valueOf(auth.getValue()))
                     .getResultList();
-            return Response.ok(generify(BookMapper.toBookingDTOs(bookings))).build();
+            return Response.ok(generify(ReserveMapper.toBookingDTOs(bookings))).build();
         } finally {
             em.close();
         }
