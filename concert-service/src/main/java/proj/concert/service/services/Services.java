@@ -1,5 +1,8 @@
 package proj.concert.service.services;
 
+import proj.concert.service.domain.*;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -29,6 +32,21 @@ public class Services {
                 .getResultList();
         em.close();
         return objects;
+    }
+
+    // get seats
+    public static List<Seat> getSeats(String date, String status) {
+        return getSeats(LocalDateTime.parse(date), status);
+    }
+
+    public static List<Seat> getSeats(LocalDateTime date, String status) {
+        EntityManager em = PersistenceManager.instance().createEntityManager();
+        List<Seat> seats = em
+                .createNamedQuery("Seat.get" + status, Seat.class)
+                .setParameter(1, date)
+                .getResultList();
+        em.close();
+        return seats;
     }
 
 }

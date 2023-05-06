@@ -6,7 +6,6 @@ import proj.concert.service.mapper.*;
 import static proj.concert.service.services.Services.*;
 
 import java.net.URI;
-import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -58,7 +57,6 @@ public class BookResource {
         }
     }
 
-
     // get seats
     // ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾
     @GET
@@ -67,16 +65,9 @@ public class BookResource {
             @PathParam("date") String date,
             @QueryParam("status") String status
     ) {
-        EntityManager em = PersistenceManager.instance().createEntityManager();
-        try {
-            List<Seat> seats = em
-                    .createNamedQuery("Seat.get" + status, Seat.class)
-                    .setParameter(1, LocalDateTime.parse(date))
-                    .getResultList();
-            return Response.ok(generify(BookMapper.toSeatDTOs(seats))).build();
-        } finally {
-            em.close();
-        }
+        List<Seat> seats = Services.getSeats(date, status);
+
+        return Response.ok(generify(BookMapper.toSeatDTOs(seats))).build();
     }
 
 
