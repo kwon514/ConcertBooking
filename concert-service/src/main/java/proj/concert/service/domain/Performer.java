@@ -1,15 +1,19 @@
 package proj.concert.service.domain;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import proj.concert.common.types.Genre;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-import proj.concert.common.types.Genre;
 
 @Entity
 @Table(name = "PERFORMERS")
@@ -117,4 +121,5 @@ public class Performer {
                 .append(genre)
                 .hashCode();
     }
+
 }

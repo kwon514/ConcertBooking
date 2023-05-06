@@ -12,20 +12,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
-import javax.persistence.Lob;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.persistence.FetchType;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.checkerframework.checker.units.qual.Length;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-
-import proj.concert.common.jackson.LocalDateTimeDeserializer;
-import proj.concert.common.jackson.LocalDateTimeSerializer;
 
 @Entity
 @Table(name = "CONCERTS")
@@ -156,4 +149,5 @@ public class Concert implements Comparable<Concert> {
     public int compareTo(Concert other) {
         return title.compareTo(other.getTitle());
     }
+
 }
