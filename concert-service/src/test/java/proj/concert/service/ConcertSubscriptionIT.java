@@ -1,23 +1,29 @@
 package proj.concert.service;
 
+import org.junit.*;
+
 import proj.concert.common.dto.*;
+import proj.concert.common.jackson.LocalDateTimeDeserializer;
+import proj.concert.common.types.Genre;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.Response;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
-import org.junit.*;
 import static org.junit.Assert.*;
-
 
 public class ConcertSubscriptionIT {
 
@@ -48,6 +54,7 @@ public class ConcertSubscriptionIT {
         client = null;
     }
 
+    // Tests for publish / subscribe functions - uncomment when ready.
     // --------------------------------------------------------------------
 
     /**
